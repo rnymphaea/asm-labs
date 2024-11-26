@@ -13,8 +13,7 @@ DATA ENDS
 
 CODE SEGMENT
     ASSUME CS:CODE, DS:DATA, SS:AStack
-    
-; Обработчик прерывания 60h
+
 MY_INT PROC FAR
     PUSH AX
     PUSH BX
@@ -138,20 +137,19 @@ Main PROC FAR
     MOV AX, DATA
     MOV DS, AX
     
-    ; Сохранение оригинального вектора прерывания 60h
     MOV AH, 35h
-    MOV AL, 60h
+    MOV AL, 23h
     INT 21h
     MOV KEEP_IP, BX
     MOV KEEP_CS, ES
     
-    ; Установка нового вектора прерывания 60h
+    ; Установка нового вектора прерывания 23h
     PUSH DS
     MOV DX, OFFSET MY_INT
     MOV AX, SEG MY_INT
     MOV DS, AX
     MOV AH, 25h
-    MOV AL, 60h
+    MOV AL, 23h
     INT 21h
     POP DS
 
@@ -160,10 +158,15 @@ Main PROC FAR
     MOV AH, 0Ah
     INT 21h
     
+    LOOPED:
+        MOV AH, 0h   ; прерывание ввода символа
+        INT 16h
+        CMP AL, 3h   ; сравнение с кодом «control + C»
+        JNE LOOPED   ; совершаем переход при несовпадении		
+        INT 23h
     ; Генерация прерывания для обработки строки
-    INT 60h
-    
-    ; Восстановление оригинального вектора прерывания 60h
+    ; INT 23h
+
     CLI
     PUSH DS
     MOV DX, KEEP_IP
